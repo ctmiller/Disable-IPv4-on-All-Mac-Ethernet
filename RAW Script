@@ -1,0 +1,45 @@
+#!/bin/sh
+#################################################################
+# Disable IPv4 for systems running older OS X versions.
+# By Christopher Miller 
+# For ITSD-ISS of JHU-APL
+# Dated: 2016-12-19, LastMod: 2017-01-24
+# This version will disable OS X versions below 10.10
+#################################################################
+
+# Set the variable Release Version cutoff point, find the OS X product version, find the Release version
+# NOTE: OS X 10.10.x is release '14', OS X 10.11.x is release '15' and so on...
+CutOffVersion=14
+OSXVersion=$(sw_vers -productVersion)
+UName=$(uname -r)
+
+echo "This system is using "$OSXVersion", Which is release version: "$UName
+
+# Check Release version and whether it meets or exceeds cutoff point
+if [[ "$UName" < "$CutOffVersion" ]]; then
+	echo "Old Mac OS X found, we are now disabling IPv4" 
+
+#################################################################
+# Build a list of Service Names to be worked through
+#################################################################
+# Set the delimiter(s) to tab and new line, to avoid breaking apart Service Names
+# Get a list of all the Service Names, trim response to ONLY the Service Name(s)
+IFS=$'\t\n'; ServiceList=$(networksetup -listnetworkserviceorder | grep "Device: en" | cut -c 17- | tr "," "\n" | grep -v "Device:")
+
+
+# Disable IPv4 for all the Service Names found, this can be restored manually in System Prefs or via command line
+for i in $ServiceList ; do 
+	echo "Disabling IPv4 for $i"
+	networksetup -setv4off "$i"; echo
+done
+
+# Signal when done.
+echo "All Done!"
+
+# Signal that OS level meets minimum requirement
+else
+	echo "OS Version is okay!"
+
+fi
+
+exit 0
